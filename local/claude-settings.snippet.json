@@ -1,0 +1,23 @@
+{
+  "//": "Merge this `env` block into ~/.claude/settings.json (user-level, audits every session).",
+  "//detail": "TOOL_DETAILS=1 un-redacts skill/agent/MCP-tool names AND bash commands + file paths.",
+  "//excluded": "Prompts, assistant responses, file contents, and raw API bodies stay OFF.",
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+    "OTEL_METRIC_EXPORT_INTERVAL": "10000",
+    "OTEL_LOGS_EXPORT_INTERVAL": "3000",
+
+    "OTEL_LOG_TOOL_DETAILS": "1",
+
+    "OTEL_LOG_USER_PROMPTS": "0",
+    "OTEL_LOG_ASSISTANT_RESPONSES": "0",
+    "OTEL_LOG_TOOL_CONTENT": "0",
+    "OTEL_LOG_RAW_API_BODIES": "0",
+
+    "OTEL_METRICS_INCLUDE_SESSION_ID": "true"
+  }
+}

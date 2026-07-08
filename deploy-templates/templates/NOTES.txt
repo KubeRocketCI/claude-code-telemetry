@@ -1,0 +1,27 @@
+claude-code-telemetry deployed — self-contained bundle (collector + Prometheus + Loki + Grafana).
+
+Collector (in-cluster):
+  OTLP gRPC : {{ include "claude-code-telemetry.collectorService" . }}.{{ .Release.Namespace }}.svc:4317
+  OTLP HTTP : {{ include "claude-code-telemetry.collectorService" . }}.{{ .Release.Namespace }}.svc:4318
+{{- if .Values.ingress.grpc.enabled }}
+  OTLP gRPC (external): https://{{ .Values.ingress.grpc.host }}
+{{- end }}
+{{- if .Values.ingress.http.enabled }}
+  OTLP HTTP (external): http(s)://{{ .Values.ingress.http.host }}  (OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf)
+{{- end }}
+{{- if not (or .Values.ingress.grpc.enabled .Values.ingress.http.enabled) }}
+
+No ingress enabled — for a quick test from a laptop:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "claude-code-telemetry.collectorService" . }} 4317:4317 4318:4318
+{{- end }}
+
+Client setup: merge local/claude-settings.snippet.json (repo) into ~/.claude/settings.json
+and point OTEL_EXPORTER_OTLP_ENDPOINT at the endpoint above.
+
+{{- if index .Values "grafana" "enabled" }}
+
+Grafana:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/grafana 3000:80
+  admin password: kubectl -n {{ .Release.Namespace }} get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d
+  Dashboard: Claude Code — Usage Audit (auto-provisioned via sidecar)
+{{- end }}

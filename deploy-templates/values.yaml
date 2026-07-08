@@ -1,0 +1,268 @@
+# Default values for claude-code-telemetry — a self-contained telemetry bundle:
+# upstream opentelemetry-collector + prometheus + grafana + loki subcharts.
+# No operator/CRD/platform prerequisites; every component is scoped to this
+# bundle only (the bundled Prometheus scrapes a single static target — it will
+# never discover or scrape anything else in the cluster).
+#
+#   helm install claude-code-telemetry . -n claude-code-telemetry --create-namespace
+#
+# The collector pipeline lives ONCE, in opentelemetry-collector.alternateConfig.
+# Validate pipeline changes in the repo's local/ docker-compose stack first,
+# then replicate them there.
+
+nameOverride: ""
+fullnameOverride: "claude-code-telemetry"
+
+# OTLP entry points for laptops outside the cluster.
+# gRPC (:4317) via ingress-nginx requires the GRPC backend protocol and TLS (HTTP/2);
+# the plain HTTP host (:4318) works without TLS — clients then set
+# OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf.
+ingress:
+  grpc:
+    enabled: false
+    host: otel.example.com
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: GRPC
+    tls: []
+    # - secretName: otel-grpc-tls
+    #   hosts: [otel.example.com]
+  http:
+    enabled: false
+    host: otel-http.example.com
+    annotations: {}
+    tls: []
+
+# Ship config/grafana/dashboards/*.json as ConfigMaps picked up by the bundled
+# Grafana's dashboard sidecar (same label).
+dashboards:
+  enabled: true
+  label: grafana_dashboard
+  labelValue: "1"
+  annotations: {}
+  # grafana_folder: Claude Code
+
+# Collector — upstream chart, plain Deployment.
+opentelemetry-collector:
+  enabled: true
+  fullnameOverride: otel-collector
+  mode: deployment
+  replicaCount: 1
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: 0.156.0
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  ports:
+    jaeger-compact:
+      enabled: false
+    jaeger-thrift:
+      enabled: false
+    jaeger-grpc:
+      enabled: false
+    zipkin:
+      enabled: false
+    promexporter:
+      enabled: true
+      containerPort: 8889
+      servicePort: 8889
+      protocol: TCP
+
+  # THE collector pipeline (used verbatim — no merging with upstream-chart defaults).
+  # Receives OTLP from Claude Code, fans metrics to Prometheus and events/logs to Loki.
+  # `${env:VAR:-default}` knobs can be overridden via extraEnvs without touching the pipeline.
+  alternateConfig:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch:
+        timeout: 5s
+      # Tag everything so multiple sources (laptops, CI) are distinguishable in one backend.
+      resource:
+        attributes:
+          - key: collector.env
+            value: ${env:COLLECTOR_ENV:-k8s}
+            action: upsert
+
+    exporters:
+      # Metrics -> Prometheus scrape endpoint on :8889.
+      # add_metric_suffixes:false keeps names predictable: claude_code.token.usage -> claude_code_token_usage
+      # resource_to_telemetry_conversion turns resource attrs (project, jira.ticket, user.email, ...)
+      # into Prometheus labels so we can break tokens/cost down by them.
+      prometheus:
+        endpoint: 0.0.0.0:8889
+        add_metric_suffixes: false
+        resource_to_telemetry_conversion:
+          enabled: true
+
+      # Events/logs -> Loki native OTLP ingest. Resource attrs become Loki labels;
+      # event attributes (tool_name, skill.name, agent.name, decision, ...) become
+      # structured metadata.
+      otlphttp/loki:
+        endpoint: ${env:LOKI_ENDPOINT:-http://loki:3100/otlp}
+
+      # `basic` keeps pod logs sane; flip to `detailed` only while debugging ingestion.
+      debug:
+        verbosity: ${env:DEBUG_VERBOSITY:-basic}
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [resource, batch]
+          exporters: [prometheus, debug]
+        logs:
+          receivers: [otlp]
+          processors: [resource, batch]
+          exporters: [otlphttp/loki, debug]
+      telemetry:
+        logs:
+          level: info
+
+# Event store (grafana/loki subchart) — SingleBinary, filesystem storage,
+# sized for the usage-audit event volume.
+loki:
+  enabled: true
+  fullnameOverride: loki
+  deploymentMode: SingleBinary
+  # Namespace-scoped RBAC only — this bundle must not create cluster-wide resources.
+  rbac:
+    namespaced: true
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
+    schemaConfig:
+      configs:
+        - from: "2024-04-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+    limits_config:
+      # Claude Code event attributes arrive as OTLP structured metadata.
+      allow_structured_metadata: true
+      retention_period: 720h
+  singleBinary:
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 10Gi
+  # Disable the scalable-mode targets and extras the subchart enables by default.
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  gateway:
+    enabled: false
+  chunksCache:
+    enabled: false
+  resultsCache:
+    enabled: false
+  lokiCanary:
+    enabled: false
+  test:
+    enabled: false
+  monitoring:
+    selfMonitoring:
+      enabled: false
+      grafanaAgent:
+        installOperator: false
+
+# Metrics store (prometheus-community/prometheus subchart) — bundle-scoped:
+# a single static scrape target, no cluster-wide discovery, no RBAC, and none
+# of the cluster-monitoring extras (node-exporter, kube-state-metrics, ...).
+prometheus:
+  enabled: true
+  fullnameOverride: prometheus
+  rbac:
+    create: false
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  server:
+    retention: 30d
+    persistentVolume:
+      enabled: true
+      size: 10Gi
+  # Disable ALL of the chart's default scrape jobs (kubernetes-* cluster-wide
+  # discovery, self-scrape, pushgateway) — this Prometheus monitors ONLY the
+  # bundle's collector via one static target.
+  scrapeConfigs:
+    prometheus:
+      enabled: false
+    kubernetes-api-servers:
+      enabled: false
+    kubernetes-nodes:
+      enabled: false
+    kubernetes-nodes-cadvisor:
+      enabled: false
+    kubernetes-service-endpoints:
+      enabled: false
+    kubernetes-service-endpoints-slow:
+      enabled: false
+    prometheus-pushgateway:
+      enabled: false
+    kubernetes-services:
+      enabled: false
+    kubernetes-pods:
+      enabled: false
+    kubernetes-pods-slow:
+      enabled: false
+    otel-collector:
+      enabled: true
+      honor_labels: true
+      static_configs:
+        - targets:
+            - otel-collector:8889
+
+# Visualization (grafana/grafana subchart).
+grafana:
+  enabled: true
+  fullnameOverride: grafana
+  # Namespace-scoped RBAC only; the dashboard sidecar watches this namespace anyway.
+  rbac:
+    namespaced: true
+  testFramework:
+    enabled: false
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+  # Datasource UIDs match local/grafana provisioning so dashboards work unchanged.
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          uid: prometheus
+          access: proxy
+          url: http://prometheus-server
+          isDefault: true
+        - name: Loki
+          type: loki
+          uid: loki
+          access: proxy
+          url: http://loki:3100

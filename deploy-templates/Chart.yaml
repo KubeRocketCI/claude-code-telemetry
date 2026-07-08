@@ -1,0 +1,39 @@
+apiVersion: v2
+description: Claude Code usage-audit telemetry — self-contained bundle of OTel Collector, Prometheus, Loki, and Grafana with usage dashboards
+home: https://docs.kuberocketci.io/
+name: claude-code-telemetry
+type: application
+version: 0.1.0-SNAPSHOT
+appVersion: 0.1.0-SNAPSHOT
+icon: https://docs.kuberocketci.io/img/logo.svg
+keywords:
+  - edp
+  - kubernetes
+  - kuberocketci
+  - opentelemetry
+  - claude-code
+maintainers:
+  - name: epmd-edp
+    email: SupportEPMD-EDP@epam.com
+    url: https://solutionshub.epam.com/solution/kuberocketci
+sources:
+  - https://github.com/KubeRocketCI/claude-code-telemetry
+annotations:
+  artifacthub.io/license: Apache-2.0
+dependencies:
+  - name: opentelemetry-collector
+    version: 0.164.1
+    repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+    condition: opentelemetry-collector.enabled
+  - name: loki
+    version: 7.0.0
+    repository: https://grafana.github.io/helm-charts
+    condition: loki.enabled
+  - name: prometheus
+    version: 29.14.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+  - name: grafana
+    version: 10.5.15
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled

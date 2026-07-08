@@ -1,0 +1,11 @@
+# Helm
+deploy-templates/charts/
+deploy-templates/Chart.lock
+*.tgz
+
+# Local
+.DS_Store
+*.log
+
+# Claude local
+.claude/settings.local.json
