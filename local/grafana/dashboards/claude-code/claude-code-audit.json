@@ -304,9 +304,27 @@
       },
       "targets": [
         {
-          "expr": "sum by (project, jira_epic) (increase(claude_code_cost_usage_USD_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
-          "legendFormat": "{{project}} / {{jira_epic}}",
+          "expr": "label_join(sum by (project, jira_epic) (increase(claude_code_cost_usage_USD_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range])), \"project_epic\", \" / \", \"project\", \"jira_epic\")",
+          "format": "table",
+          "instant": true,
+          "range": false,
           "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "project": true,
+              "jira_epic": true
+            },
+            "renameByName": {
+              "project_epic": "Project / Epic",
+              "Value": "Cost"
+            }
+          }
         }
       ]
     },
@@ -331,8 +349,24 @@
       "targets": [
         {
           "expr": "sum by (agent_name) (increase(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", agent_name!=\"\"}[$__range]))",
-          "legendFormat": "{{agent_name}}",
+          "format": "table",
+          "instant": true,
+          "range": false,
           "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "agent_name": "Agent",
+              "Value": "Tokens"
+            }
+          }
         }
       ]
     },

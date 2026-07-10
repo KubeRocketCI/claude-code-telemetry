@@ -3,7 +3,7 @@
 #                                                          \--> Grafana (dashboards)
 
 # Start:  docker compose up -d      Stop: docker compose down      Wipe: docker compose down -v
-name: claude-code-otel
+name: claude-code-telemetry
 
 services:
   otel-collector:
