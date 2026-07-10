@@ -365,13 +365,70 @@
       ]
     },
     {
+      "type": "table",
+      "title": "Code-edit decisions by language",
+      "description": "claude_code.code_edit_tool_decision metric: Edit/Write permission outcomes broken down by programming language. High reject rates in a language flag low trust in generated code there; this dimension exists only on the metric, not on events.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (language, decision) (increase(claude_code_code_edit_tool_decision_total{organization_id=~\"$organization_id\", project=~\"$project\", user_email=~\"$user_email\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Edits",
+              "Value #A": "Edits"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Edits",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "Reliability & MCP governance",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 35
       },
       "collapsed": false,
       "panels": []
@@ -388,7 +445,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 29
+        "y": 36
       },
       "fieldConfig": {
         "defaults": {
@@ -421,7 +478,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 29
+        "y": 36
       },
       "fieldConfig": {
         "defaults": {
@@ -454,7 +511,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 29
+        "y": 36
       },
       "fieldConfig": {
         "defaults": {
@@ -487,7 +544,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 44
       },
       "targets": [
         {
@@ -525,12 +582,79 @@
     },
     {
       "type": "row",
+      "title": "Plugin inventory",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Plugins in use across teams — who runs what, which version, enabled how",
+      "description": "claude_code.plugin_loaded events (one per plugin per session start): marketplace, plugin, version, scope (official / org / user-local), enablement path (org-policy vs user-install), and the user loading it. Governance signals: unapproved plugins, version stragglers, and plugins enabled ad-hoc instead of via org policy. 'Session loads' counts sessions that loaded the plugin.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (marketplace_name, plugin_name, plugin_version, plugin_scope, enabled_via, user_email) (count_over_time({service_name=\"claude-code\"} | event_name = `plugin_loaded` [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Session loads"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Session loads",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
       "title": "Auth & cost anomalies",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 61
       },
       "collapsed": false,
       "panels": []
@@ -547,7 +671,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 45
+        "y": 62
       },
       "options": {
         "showTime": true,
@@ -573,7 +697,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 45
+        "y": 62
       },
       "fieldConfig": {
         "defaults": {

@@ -1,146 +1,601 @@
 {
   "title": "Claude Code — Operations & Adoption",
   "uid": "claude-code-ops",
-  "tags": ["claude-code", "otel"],
+  "tags": [
+    "claude-code",
+    "otel"
+  ],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
   "refresh": "30s",
-  "time": { "from": "now-24h", "to": "now" },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
         "name": "organization_id",
         "label": "Organization",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(claude_code_token_usage_tokens_total, organization_id)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
         "name": "project",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\"}, project)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
         "name": "jira_epic",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\"}, jira_epic)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
         "name": "jira_story",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\"}, jira_story)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
         "name": "user_email",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(claude_code_token_usage_tokens_total, user_email)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
         "name": "model",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(claude_code_token_usage_tokens_total, model)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       }
     ]
   },
   "panels": [
     {
-      "type": "row", "title": "Adoption — active users",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-      "collapsed": false, "panels": []
+      "type": "row",
+      "title": "Adoption — active users",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "collapsed": false,
+      "panels": []
     },
     {
-      "type": "stat", "title": "DAU — active users (trailing 24h)",
+      "type": "stat",
+      "title": "DAU — active users (trailing 24h)",
       "description": "Distinct user_email whose session_count series was active in the trailing 24h. Rolling window, not calendar day. Uses present_over_time because each session is a distinct flat series (session_id label), so increase() is always 0.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 1 },
-      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
-      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[1d])))", "instant": true, "refId": "A" } ]
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[1d])))",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "stat", "title": "WAU — active users (trailing 7d)",
+      "type": "stat",
+      "title": "WAU — active users (trailing 7d)",
       "description": "Distinct user_email whose session_count series was active in the trailing 7 days.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
-      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
-      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[7d])))", "instant": true, "refId": "A" } ]
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[7d])))",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "stat", "title": "MAU — active users (trailing 30d)",
+      "type": "stat",
+      "title": "MAU — active users (trailing 30d)",
       "description": "Distinct user_email whose session_count series was active in the trailing 30 days.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 1 },
-      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
-      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[30d])))", "instant": true, "refId": "A" } ]
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[30d])))",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "row", "title": "Health — API & tool reliability",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
-      "collapsed": false, "panels": []
+      "type": "piechart",
+      "title": "Sessions by start type",
+      "description": "Distinct session series by start_type (fresh / resume / continue). Heavy resume/continue means long-lived working sessions; all-fresh may mean one-shot usage. Uses present_over_time because each session is a distinct flat series.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "count by (start_type) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "legendFormat": "{{start_type}}",
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "timeseries", "title": "API request latency by model (avg ms)",
+      "type": "piechart",
+      "title": "Sessions by client (terminal.type)",
+      "description": "Where people run Claude Code — VS Code, iTerm, Cursor, tmux… Adoption-surface insight for tooling/rollout decisions.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "count by (terminal_type) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "legendFormat": "{{terminal_type}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Sessions by Claude Code version",
+      "description": "Version spread across active sessions — tracks rollout of new releases and flags stragglers on old versions.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "count by (service_version) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "legendFormat": "{{service_version}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Skill activations by source",
+      "description": "claude_code.skill_activated events by skill_source (plugin / bundled / builtin / userSettings / projectSettings). The plugin share tells you whether the team-mandated plugins are actually the way skills get used.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 13
+      },
+      "targets": [
+        {
+          "expr": "sum by (skill_source) (count_over_time({service_name=\"claude-code\"} | event_name = `skill_activated` [$__range]))",
+          "legendFormat": "{{skill_source}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Plugin skill usage — by plugin, skill & trigger",
+      "description": "skill_activated events with skill_source=plugin, broken down by marketplace, plugin, skill, and how they were invoked (user-slash = someone typed the command, claude-proactive = Claude picked the skill itself). This is the adoption tracker for team-mandated plugins.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (marketplace_name, plugin_name, skill_name, invocation_trigger) (count_over_time({service_name=\"claude-code\"} | event_name = `skill_activated` | skill_source = `plugin` [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Activations"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Activations",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Health — API & tool reliability",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "API request latency by model (avg ms)",
       "description": "Mean duration_ms of claude_code.api_request events, from Loki.",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
-      "fieldConfig": { "defaults": { "unit": "ms" } },
-      "targets": [ { "expr": "avg by (model) (avg_over_time({service_name=\"claude-code\"} |= \"claude_code.api_request\" | unwrap duration_ms [$__auto]))", "legendFormat": "{{model}}", "refId": "A" } ]
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg by (model) (avg_over_time({service_name=\"claude-code\"} |= \"claude_code.api_request\" | unwrap duration_ms [$__auto]))",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "timeseries", "title": "API error rate by status_code",
+      "type": "timeseries",
+      "title": "API error rate by status_code",
       "description": "Rate of claude_code.api_error events grouped by HTTP status_code, from Loki.",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" } } } },
-      "targets": [ { "expr": "sum by (status_code) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_error\" [$__auto]))", "legendFormat": "HTTP {{status_code}}", "refId": "A" } ]
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (status_code) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_error\" [$__auto]))",
+          "legendFormat": "HTTP {{status_code}}",
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "table", "title": "Tool success rate (%) — from events",
+      "type": "table",
+      "title": "Tool success rate (%) — from events",
       "description": "Percentage of claude_code.tool_result events with success=true, per tool, over the selected range.",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 15 },
-      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100 } },
-      "targets": [ { "expr": "100 * sum by (tool_name) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.tool_result\" | success=\"true\" [$__range])) / sum by (tool_name) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.tool_result\" | tool_name != `` [$__range]))", "queryType": "instant", "refId": "A" } ],
-      "transformations": [ { "id": "sortBy", "options": { "fields": {}, "sort": [ { "field": "Value", "desc": false } ] } } ]
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (tool_name) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.tool_result\" | success=\"true\" [$__range])) / sum by (tool_name) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.tool_result\" | tool_name != `` [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Value",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
     },
     {
-      "type": "logs", "title": "API error events (recent)",
+      "type": "logs",
+      "title": "API error events (recent)",
       "description": "Raw claude_code.api_error events for troubleshooting.",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 15 },
-      "options": { "showTime": true, "wrapLogMessage": true, "dedupStrategy": "none" },
-      "targets": [ { "expr": "{service_name=\"claude-code\"} |= \"claude_code.api_error\"", "refId": "A" } ]
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none"
+      },
+      "targets": [
+        {
+          "expr": "{service_name=\"claude-code\"} |= \"claude_code.api_error\"",
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "timeseries", "title": "API retries exhausted (count) — wasted spend",
+      "type": "timeseries",
+      "title": "API retries exhausted (count) — wasted spend",
       "description": "Count of claude_code.api_retries_exhausted events by model. These are paid tokens with no usable output; spikes signal provider or proxy instability.",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" } } } },
-      "targets": [ { "expr": "sum by (model) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_retries_exhausted\" [$__auto]))", "legendFormat": "{{model}}", "refId": "A" } ]
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_retries_exhausted\" [$__auto]))",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Context compactions by trigger",
+      "description": "claude_code.compaction events by trigger (auto / manual). Frequent auto-compaction means sessions regularly hit the context ceiling — long sessions or oversized context.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 47
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (trigger) (count_over_time({service_name=\"claude-code\"} | event_name = `compaction` [$__auto]))",
+          "legendFormat": "{{trigger}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Compaction failures (range)",
+      "description": "compaction events with success=false — a failed compaction can stall or truncate a session's context.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 47
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} | event_name = `compaction` | success=\"false\" [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
     }
   ]
 }
