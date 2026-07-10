@@ -9,6 +9,15 @@ providers:
     allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards/claude-code
+  - name: governance
+    orgId: 1
+    folder: Governance
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 15
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/governance
   - name: operational
     orgId: 1
     folder: Operational

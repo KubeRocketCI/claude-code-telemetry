@@ -133,6 +133,14 @@
       "gridPos": { "h": 9, "w": 12, "x": 12, "y": 15 },
       "options": { "showTime": true, "wrapLogMessage": true, "dedupStrategy": "none" },
       "targets": [ { "expr": "{service_name=\"claude-code\"} |= \"claude_code.api_error\"", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries", "title": "API retries exhausted (count) — wasted spend",
+      "description": "Count of claude_code.api_retries_exhausted events by model. These are paid tokens with no usable output; spikes signal provider or proxy instability.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" } } } },
+      "targets": [ { "expr": "sum by (model) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_retries_exhausted\" [$__auto]))", "legendFormat": "{{model}}", "refId": "A" } ]
     }
   ]
 }

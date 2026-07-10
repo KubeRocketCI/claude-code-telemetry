@@ -44,6 +44,7 @@ dashboards:
   # Scope subdirectory (under config/grafana/dashboards/) -> Grafana folder title.
   folders:
     claude-code: Claude Code
+    governance: Governance
     operational: Operational
 
 # Collector — upstream chart, plain Deployment.
