@@ -13,8 +13,10 @@ Prometheus for metrics + Loki for events → Grafana for dashboards):
 
 The goal is attributing token/cost usage to business dimensions (`project`, `jira.epic`,
 `jira.story`, `user.email`) **without** capturing prompts, responses, file contents, or raw API
-bodies. `docs/analytics.md` is the authoritative design reference (metric/event catalog, attribution
-model, cardinality rules, governance, rollout plan) — read it before changing the pipeline.
+bodies. `spec/` is the DRY vocabulary of the full Claude Code OTEL surface (every config var, metric,
+event, span, attribute; upstream links + snapshot date). `docs/analytics.md` is the design doc
+(attribution, cardinality, governance, rollout) over the subset this stack uses — read it before
+changing the pipeline.
 
 ## The one rule that governs everything
 
@@ -62,7 +64,7 @@ To point Claude Code at the local stack: merge the `env` block from
 
 - **Metric/event names are fixed by Claude Code** — you cannot invent new ones. You *can* mandate
   new **dimensions** (resource attributes) and derive new metrics downstream via Prometheus
-  recording rules or LogQL. See `docs/analytics.md` §2 for the exact metric/event catalog.
+  recording rules or LogQL. Full catalog in `spec/`; `docs/analytics.md` §2 covers only the used subset.
 - **Cardinality**: Prometheus stores one time series per unique label combination. Low/bounded attrs
   (`model`, `agent.name`, `skill.name`, `project`, `jira.epic`) are safe as metric labels;
   high-cardinality attrs (`jira.story`, `session.id`, `prompt.id`) belong in **logs only** at team

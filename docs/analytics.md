@@ -22,6 +22,10 @@ usage to our own business dimensions — project, Jira epic, Jira story (user id
 
 ## 2. What Claude Code emits
 
+> **Full vocabulary lives in [`../spec/`](../spec/README.md)** — the exhaustive, DRY catalog of every
+> config var, metric, event, span, and attribute (with upstream links to refresh from). The tables
+> below are the *curated subset* this design relies on; consult `spec/` for anything not listed here.
+
 ### 2.1 Enable (env vars — placed in `.claude/settings.json` `env` block)
 
 | Var                            | Value                               | Purpose                                                  |
