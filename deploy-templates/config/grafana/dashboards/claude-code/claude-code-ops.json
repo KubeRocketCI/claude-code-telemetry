@@ -349,13 +349,128 @@
       ]
     },
     {
+      "type": "table",
+      "title": "Throughput per engineer — sessions, hours, output, commits",
+      "description": "Relative usage by user: sessions started, engaged active hours, output tokens produced, commits. DAU counts heads; this shows who leans on Claude Code and who doesn't — the power-user / non-adopter signal.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Active hours"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "h"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Output tokens"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (user_email) (increase(claude_code_active_time_seconds_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range])) / 3600",
+          "instant": true,
+          "format": "table",
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (user_email) (increase(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", type=\"output\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "C"
+        },
+        {
+          "expr": "sum by (user_email) (increase(claude_code_commit_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "D"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Sessions",
+              "Value #B": "Active hours",
+              "Value #C": "Output tokens",
+              "Value #D": "Commits"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Sessions",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "Health — API & tool reliability",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 31
       },
       "collapsed": false,
       "panels": []
@@ -372,7 +487,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 32
       },
       "fieldConfig": {
         "defaults": {
@@ -399,7 +514,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 32
       },
       "fieldConfig": {
         "defaults": {
@@ -432,7 +547,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 40
       },
       "fieldConfig": {
         "defaults": {
@@ -476,7 +591,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 40
       },
       "options": {
         "showTime": true,
@@ -502,7 +617,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 49
       },
       "fieldConfig": {
         "defaults": {
@@ -535,7 +650,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 57
       },
       "fieldConfig": {
         "defaults": {
@@ -568,7 +683,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 47
+        "y": 57
       },
       "fieldConfig": {
         "defaults": {

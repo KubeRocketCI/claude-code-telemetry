@@ -575,6 +575,233 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "type": "row",
+      "title": "Delivery attribution",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 48
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Cost & tokens by Jira story (range)",
+      "description": "Per-story rollup from api_request events (jira.story is logs-only by the cardinality rule — this is its canonical home). The sprint-level 'what did story Y cost' answer; assumes sessions are tagged via OTEL_RESOURCE_ATTRIBUTES.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost (USD)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Output tokens"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "sum by (project, jira_epic, jira_story) (sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | unwrap cost_usd [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (project, jira_epic, jira_story) (sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | unwrap output_tokens [$__range]))",
+          "queryType": "instant",
+          "refId": "B"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Cost (USD)",
+              "Value #B": "Output tokens"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Cost (USD)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Delivery output by project & epic (range)",
+      "description": "Raw AI-assisted throughput — commits, pull requests, and lines of code changed — per project/epic. These metrics otherwise appear only as denominators inside cost ratios.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 62
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (project, jira_epic) (increase(claude_code_commit_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (project, jira_epic) (increase(claude_code_pull_request_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (project, jira_epic) (increase(claude_code_lines_of_code_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))",
+          "instant": true,
+          "format": "table",
+          "refId": "C"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Commits",
+              "Value #B": "PRs",
+              "Value #C": "Lines changed"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Commits",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Unattributed cost (no epic tag)",
+      "description": "Spend from sessions with an empty jira_epic label — work the per-epic breakdowns cannot see. Non-zero means tagging discipline (OTEL_RESOURCE_ATTRIBUTES) is slipping.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.01
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(claude_code_cost_usage_USD_total{jira_epic=\"\", organization_id=~\"$organization_id\"}[$__range])) or vector(0)",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     }
   ]
 }

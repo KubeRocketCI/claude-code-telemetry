@@ -649,12 +649,98 @@
     },
     {
       "type": "row",
-      "title": "Auth & cost anomalies",
+      "title": "Model safety",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 61
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "API refusals (range)",
+      "description": "claude_code.api_refusal events — the model declined on safety grounds (guardrail net working). Zero is normal for engineering work; a spike deserves a look at the category panel.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 62
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_refusal\" [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Refusals by category & model",
+      "description": "api_refusal grouped by category (cyber / bio / frontier_llm / reasoning_extraction — visible via OTEL_LOG_TOOL_DETAILS) and model. Repeated cyber/bio refusals for one user or project is a governance red flag.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 62
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (category, model) (count_over_time({service_name=\"claude-code\"} |= \"claude_code.api_refusal\" [$__auto]))",
+          "legendFormat": "{{category}} / {{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Auth & cost anomalies",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 70
       },
       "collapsed": false,
       "panels": []
@@ -671,7 +757,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 71
       },
       "options": {
         "showTime": true,
@@ -697,7 +783,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 71
       },
       "fieldConfig": {
         "defaults": {

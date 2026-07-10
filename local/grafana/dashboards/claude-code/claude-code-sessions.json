@@ -278,6 +278,186 @@
       ]
     },
     {
+      "type": "stat",
+      "title": "Time in API calls",
+      "description": "Sum of duration_ms across api_request events — wall-clock spent waiting on the model.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` | unwrap duration_ms [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Time in tool execution",
+      "description": "Sum of duration_ms across tool_result events — Bash runs, file ops, MCP calls.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(sum_over_time({service_name=\"claude-code\"} | event_name = `tool_result` | session_id =~ `$session_id` | unwrap duration_ms [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Time in hooks",
+      "description": "Sum of total_duration_ms across hook_execution_complete events — latency your hooks add.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(sum_over_time({service_name=\"claude-code\"} | event_name = `hook_execution_complete` | session_id =~ `$session_id` | unwrap total_duration_ms [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Failed tool calls",
+      "description": "tool_result events with success=false in the matching session(s).",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} | event_name = `tool_result` | success = `false` | session_id =~ `$session_id` [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Tool failures — by tool & error type",
+      "description": "Failed tool_result events grouped by tool_name and error_type — 'which tools fail on me, and why'. Full error text is on the raw events in the timeline below (visible via OTEL_LOG_TOOL_DETAILS).",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (tool_name, error_type) (count_over_time({service_name=\"claude-code\"} | event_name = `tool_result` | success = `false` | session_id =~ `$session_id` [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Failures"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Failures",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "type": "logs",
       "title": "Prompts in session (metadata only — content stays redacted)",
       "description": "claude_code.user_prompt events: command_name, command_source, prompt_length. Prompt content is never captured (OTEL_LOG_USER_PROMPTS=0 by design).",
@@ -289,7 +469,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 22
+        "y": 35
       },
       "options": {
         "showTime": true,
@@ -316,7 +496,7 @@
         "h": 9,
         "w": 16,
         "x": 8,
-        "y": 22
+        "y": 35
       },
       "options": {
         "showTime": true,
@@ -343,7 +523,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 44
       },
       "options": {
         "showTime": true,
