@@ -1,0 +1,362 @@
+{
+  "title": "Claude Code — Session Explorer",
+  "uid": "claude-code-sessions",
+  "tags": [
+    "claude-code",
+    "otel",
+    "sessions",
+    "incident-response"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "session_id",
+        "label": "Session ID (regex)",
+        "type": "textbox",
+        "query": ".+",
+        "current": {
+          "text": ".+",
+          "value": ".+"
+        },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Session cost (USD)",
+      "description": "Sum of cost_usd across claude_code.api_request events matching the session filter. Set the Session ID variable to a single session to audit it; default .+ aggregates all sessions in range.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` | unwrap cost_usd [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Tokens (input + output)",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` | unwrap input_tokens [$__range])) + sum(sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` | unwrap output_tokens [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "API requests",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Tool calls",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} | event_name = `tool_result` | session_id =~ `$session_id` [$__range])) or vector(0)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Sessions — cost & context (sorted by cost)",
+      "description": "One row per session with full attribution context. 'Cost (USD)' sums cost_usd over the session's api_request events; 'Events' is the total telemetry event count for the session (proxy for activity volume). Respects the Session ID filter; click a session_id to drill into it.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          },
+          "links": [
+            {
+              "title": "Explore this session",
+              "url": "/d/claude-code-sessions?var-session_id=${__data.fields.session_id}&${__url_time_range}"
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost (USD)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Events"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "sum by (session_id, user_email, project, jira_epic, jira_story, service_version) (sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` | unwrap cost_usd [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (session_id, user_email, project, jira_epic, jira_story, service_version) (count_over_time({service_name=\"claude-code\"} | session_id =~ `$session_id` [$__range]))",
+          "queryType": "instant",
+          "refId": "B"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "Cost (USD)",
+              "Value #B": "Events"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Cost (USD)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost over time by session",
+      "description": "Cost accrual per session over the range — a session that keeps climbing after the work should be done is the runaway-workflow signal.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (sum_over_time({service_name=\"claude-code\"} | event_name = `api_request` | session_id =~ `$session_id` | unwrap cost_usd [$__auto]))",
+          "legendFormat": "{{session_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Prompts in session (metadata only — content stays redacted)",
+      "description": "claude_code.user_prompt events: command_name, command_source, prompt_length. Prompt content is never captured (OTEL_LOG_USER_PROMPTS=0 by design).",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Ascending"
+      },
+      "targets": [
+        {
+          "expr": "{service_name=\"claude-code\"} | event_name = `user_prompt` | session_id =~ `$session_id`",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Tool call sequence — name, success, duration, decision source",
+      "description": "claude_code.tool_result events in order. event_sequence in the metadata gives the exact within-session ordering for incident reconstruction.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 8,
+        "y": 22
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Ascending"
+      },
+      "targets": [
+        {
+          "expr": "{service_name=\"claude-code\"} | event_name = `tool_result` | session_id =~ `$session_id`",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Full session timeline — every event, in order",
+      "description": "Complete event stream (prompts, decisions, tool results, API calls, hooks, mode changes) for the selected session — join key is session_id + event_sequence.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Ascending"
+      },
+      "targets": [
+        {
+          "expr": "{service_name=\"claude-code\"} | session_id =~ `$session_id`",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
