@@ -150,6 +150,13 @@ tokens/cost break down by `user_email` out of the box — no launcher change. On
 identity attribute if you need a *different* identifier than the auth email (e.g. an internal LDAP
 uid); then add `user.ldap=<uid>` to `OTEL_RESOURCE_ATTRIBUTES` alongside the others.
 
+> **DAU/WAU/MAU depend on `user_email` staying a metric label.** The Operations & Adoption
+> dashboard counts active users with
+> `count(count by (user_email) (present_over_time(claude_code_session_count[<window>])))`.
+> Note `present_over_time`, *not* `increase(...) > 0`: `session_count` carries `session.id`, so each
+> session is a distinct flat series whose `increase()` is always 0. If `user_email` is ever demoted
+> to logs-only for cardinality reasons, move this count to LogQL over the session events instead.
+
 ---
 
 ## 4. Governance — making attributes mandatory
