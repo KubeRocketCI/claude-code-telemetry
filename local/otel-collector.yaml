@@ -23,12 +23,14 @@ processors:
 
 exporters:
   # Metrics -> Prometheus scrape endpoint on :8889.
-  # add_metric_suffixes:false keeps names predictable: claude_code.token.usage -> claude_code_token_usage
+  # Claude Code metrics are OTel counters, so Prometheus names carry the unit + `_total` suffix
+  # (claude_code.token.usage -> claude_code_token_usage_tokens_total,
+  #  claude_code.cost.usage -> claude_code_cost_usage_USD_total,
+  #  claude_code.session.count -> claude_code_session_count_total). Dashboards query these names.
   # resource_to_telemetry_conversion turns resource attrs (project, jira.ticket, user.email, session.id...)
   # into Prometheus labels so we can break tokens/cost down by them.
   prometheus:
     endpoint: 0.0.0.0:8889
-    add_metric_suffixes: false
     resource_to_telemetry_conversion:
       enabled: true
 
@@ -55,3 +57,13 @@ service:
   telemetry:
     logs:
       level: info
+    # Collector self-observability: expose internal otelcol_* metrics on :8888 for the
+    # "Collector Health" dashboard (Prometheus scrapes this as the `otel-collector` job).
+    metrics:
+      level: detailed
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888

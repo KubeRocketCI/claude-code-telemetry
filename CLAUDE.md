@@ -26,7 +26,7 @@ the source of truth you iterate on; `deploy-templates/` is the replication targe
 | Artifact           | Iterate here (source of truth)    | Replicate to (deployable)                                                  |
 |--------------------|-----------------------------------|----------------------------------------------------------------------------|
 | Collector pipeline | `local/otel-collector.yaml`       | `deploy-templates/values.yaml` → `opentelemetry-collector.alternateConfig` |
-| Dashboards         | `local/grafana/dashboards/*.json` | `deploy-templates/config/grafana/dashboards/*.json`                        |
+| Dashboards         | `local/grafana/dashboards/<scope>/*.json` | `deploy-templates/config/grafana/dashboards/<scope>/*.json`        |
 
 The two pipeline copies differ **only** in: `collector.env` value (`local-poc` vs `${env:COLLECTOR_ENV:-k8s}`),
 the Loki endpoint (hardcoded vs `${env:LOKI_ENDPOINT:-...}`), and debug `verbosity`. Keep receivers,
@@ -73,16 +73,24 @@ To point Claude Code at the local stack: merge the `env` block from
 - **Attribution is injected via `OTEL_RESOURCE_ATTRIBUTES`** (comma-separated `key=value`), read
   once at `claude` startup and static for the whole session — hence "one Jira ticket ≈ one session".
   User identity (`user.email`, `user.id`, `organization.id`) is native and needs no injection.
-- **Prometheus exporter settings matter**: `add_metric_suffixes: false` keeps names predictable
-  (`claude_code.token.usage` → `claude_code_token_usage`); `resource_to_telemetry_conversion` is what
-  turns resource attributes into queryable Prometheus labels. Dashboards depend on both.
+- **Prometheus exporter settings matter**: Claude Code's metrics are OTel **counters**, so their
+  Prometheus names carry the unit + `_total` suffix
+  (`claude_code.token.usage` → `claude_code_token_usage_tokens_total`,
+  `claude_code.cost.usage` → `claude_code_cost_usage_USD_total`, etc.); dashboards query these names.
+  `resource_to_telemetry_conversion` turns resource attributes into queryable Prometheus labels.
+  Dashboards depend on both.
 - **Datasource UIDs (`prometheus`, `loki`) are hardcoded** to match across `local/grafana/provisioning`
   and the Helm `grafana.datasources` — dashboard JSON references these UIDs, so don't rename them or
   dashboards break in one environment.
-- **The Helm bundle is deliberately isolated**: its Prometheus scrapes exactly one static target
-  (`otel-collector:8889`) with all cluster-discovery scrape jobs and cluster-monitoring extras
-  (node-exporter, kube-state-metrics, alertmanager, pushgateway) disabled, and RBAC is
-  namespace-scoped. Preserve this — do not add cluster-wide discovery or CRD/operator dependencies.
+- **Dashboards are organized by scope subdirectory → Grafana folder**: `claude-code/` (Claude Code
+  usage) and `operational/` (collector health). Locally each subdir is a provisioning provider
+  (`local/grafana/provisioning/dashboards/dashboards.yaml`); in Helm the subdir name maps to a folder
+  via `dashboards.folders` + the sidecar `grafana_folder` annotation. Add a new scope in both places.
+- **The Helm bundle is deliberately isolated**: its Prometheus scrapes exactly two static targets —
+  `otel-collector:8889` (Claude Code data metrics, job `claude-code`) and `otel-collector:8888`
+  (collector self-telemetry, job `otel-collector`) — with all cluster-discovery scrape jobs and
+  cluster-monitoring extras (node-exporter, kube-state-metrics, alertmanager, pushgateway) disabled,
+  and RBAC is namespace-scoped. Preserve this — do not add cluster-wide discovery or CRD/operator dependencies.
 - **Version alignment**: the collector image (contrib `0.156.0`), Prometheus, Loki, and Grafana
   versions are intentionally kept close between `local/` and the Helm subcharts. When bumping one,
   check the other side.

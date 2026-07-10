@@ -1,0 +1,163 @@
+{
+  "title": "Claude Code — Collector Health",
+  "uid": "claude-code-collector-health",
+  "tags": ["claude-code", "otel", "collector"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "type": "row", "title": "Liveness",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false, "panels": []
+    },
+    {
+      "type": "stat", "title": "Collector up",
+      "description": "Prometheus scrape health of the collector's internal telemetry endpoint (otel-collector:8888). 1 = the collector process is alive and being scraped.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] },
+          "unit": "short"
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "up{job=\"otel-collector\"}", "instant": true, "refId": "A" } ]
+    },
+    {
+      "type": "stat", "title": "Uptime",
+      "description": "Time since the collector process started (otelcol_process_uptime).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 0 } },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "otelcol_process_uptime", "refId": "A" } ]
+    },
+    {
+      "type": "stat", "title": "Memory (RSS)",
+      "description": "Resident memory of the collector process (otelcol_process_memory_rss).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 0 } },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "otelcol_process_memory_rss", "refId": "A" } ]
+    },
+    {
+      "type": "stat", "title": "CPU (cores)",
+      "description": "CPU cores consumed by the collector, derived from otelcol_process_cpu_seconds.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 3 } },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "rate(otelcol_process_cpu_seconds[$__rate_interval])", "refId": "A" } ]
+    },
+    {
+      "type": "row", "title": "Throughput — data points processed",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "collapsed": false, "panels": []
+    },
+    {
+      "type": "timeseries", "title": "Metric points / sec",
+      "description": "Claude Code metric points flowing through the pipeline: accepted by the receiver, exported to Prometheus, and refused (should stay at 0).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "cps", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "expr": "sum(rate(otelcol_receiver_accepted_metric_points[$__rate_interval]))", "legendFormat": "accepted", "refId": "A" },
+        { "expr": "sum(rate(otelcol_exporter_sent_metric_points[$__rate_interval]))", "legendFormat": "sent", "refId": "B" },
+        { "expr": "sum(rate(otelcol_receiver_refused_metric_points[$__rate_interval]))", "legendFormat": "refused", "refId": "C" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Log records / sec",
+      "description": "Claude Code event (log) records: accepted by the receiver, exported to Loki, and refused (should stay at 0).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "cps", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "expr": "sum(rate(otelcol_receiver_accepted_log_records[$__rate_interval]))", "legendFormat": "accepted", "refId": "A" },
+        { "expr": "sum(rate(otelcol_exporter_sent_log_records[$__rate_interval]))", "legendFormat": "sent", "refId": "B" },
+        { "expr": "sum(rate(otelcol_receiver_refused_log_records[$__rate_interval]))", "legendFormat": "refused", "refId": "C" }
+      ]
+    },
+    {
+      "type": "row", "title": "Totals & reliability (selected range)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "collapsed": false, "panels": []
+    },
+    {
+      "type": "stat", "title": "Metric points exported",
+      "description": "Total Claude Code metric points exported to Prometheus over the selected range.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "sum(increase(otelcol_exporter_sent_metric_points[$__range]))", "instant": true, "refId": "A" } ]
+    },
+    {
+      "type": "stat", "title": "Log records exported",
+      "description": "Total Claude Code event records exported to Loki over the selected range.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "sum(increase(otelcol_exporter_sent_log_records[$__range]))", "instant": true, "refId": "A" } ]
+    },
+    {
+      "type": "stat", "title": "Refused metric points",
+      "description": "Metric points the collector refused over the range. Non-zero indicates backpressure or a broken exporter — investigate.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "sum(increase(otelcol_receiver_refused_metric_points[$__range]))", "instant": true, "refId": "A" } ]
+    },
+    {
+      "type": "stat", "title": "Refused log records",
+      "description": "Event records the collector refused over the range. Non-zero indicates backpressure or a broken exporter — investigate.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calc": "lastNotNull" } },
+      "targets": [ { "expr": "sum(increase(otelcol_receiver_refused_log_records[$__range]))", "instant": true, "refId": "A" } ]
+    },
+    {
+      "type": "timeseries", "title": "Exporter queue size vs capacity",
+      "description": "Per-exporter send-queue occupancy against its capacity. Queue size approaching capacity means the backend can't keep up.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "expr": "otelcol_exporter_queue_size", "legendFormat": "{{exporter}} size", "refId": "A" },
+        { "expr": "otelcol_exporter_queue_capacity", "legendFormat": "{{exporter}} capacity", "refId": "B" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Batch processor — avg send size",
+      "description": "Average number of items per batch emitted by the batch processor (send_size sum / count).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "expr": "sum(rate(otelcol_processor_batch_batch_send_size_sum[$__rate_interval])) / sum(rate(otelcol_processor_batch_batch_send_size_count[$__rate_interval]))", "legendFormat": "avg items/batch", "refId": "A" }
+      ]
+    }
+  ]
+}

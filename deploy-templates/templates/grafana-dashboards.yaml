@@ -1,5 +1,6 @@
 {{- if .Values.dashboards.enabled }}
-{{- range $path, $file := .Files.Glob "config/grafana/dashboards/*.json" }}
+{{- range $scope, $folder := .Values.dashboards.folders }}
+{{- range $path, $file := $.Files.Glob (printf "config/grafana/dashboards/%s/*.json" $scope) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -8,12 +9,14 @@ metadata:
   labels:
     {{- include "claude-code-telemetry.labels" $ | nindent 4 }}
     {{ $.Values.dashboards.label }}: {{ $.Values.dashboards.labelValue | quote }}
-  {{- with $.Values.dashboards.annotations }}
   annotations:
+    {{ $.Values.dashboards.folderAnnotation }}: {{ $folder | quote }}
+    {{- with $.Values.dashboards.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 data:
   {{ base $path }}: |-
     {{- $.Files.Get $path | nindent 4 }}
+{{- end }}
 {{- end }}
 {{- end }}

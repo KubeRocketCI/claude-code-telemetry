@@ -14,7 +14,7 @@
         "label": "Organization",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage, organization_id)",
+        "query": "label_values(claude_code_token_usage_tokens_total, organization_id)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -23,7 +23,7 @@
         "name": "project",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage{organization_id=~\"$organization_id\"}, project)",
+        "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\"}, project)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -32,7 +32,7 @@
         "name": "jira_epic",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\"}, jira_epic)",
+        "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\"}, jira_epic)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -41,7 +41,7 @@
         "name": "jira_story",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\"}, jira_story)",
+        "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\"}, jira_story)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -50,7 +50,7 @@
         "name": "user_email",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage, user_email)",
+        "query": "label_values(claude_code_token_usage_tokens_total, user_email)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -59,7 +59,7 @@
         "name": "model",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage, model)",
+        "query": "label_values(claude_code_token_usage_tokens_total, model)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -78,7 +78,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 5, "w": 8, "x": 0, "y": 1 },
       "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
-      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[1d])))", "instant": true, "refId": "A" } ]
+      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[1d])))", "instant": true, "refId": "A" } ]
     },
     {
       "type": "stat", "title": "WAU — active users (trailing 7d)",
@@ -86,7 +86,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
       "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
-      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[7d])))", "instant": true, "refId": "A" } ]
+      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[7d])))", "instant": true, "refId": "A" } ]
     },
     {
       "type": "stat", "title": "MAU — active users (trailing 30d)",
@@ -94,7 +94,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 5, "w": 8, "x": 16, "y": 1 },
       "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
-      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[30d])))", "instant": true, "refId": "A" } ]
+      "targets": [ { "expr": "count(count by (user_email) (present_over_time(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[30d])))", "instant": true, "refId": "A" } ]
     },
     {
       "type": "row", "title": "Health — API & tool reliability",

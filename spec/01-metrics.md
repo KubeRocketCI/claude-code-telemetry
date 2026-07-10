@@ -2,21 +2,23 @@
 
 > All 8 metrics Claude Code emits. Names are **fixed** — derive new metrics downstream via Prometheus
 > recording rules / LogQL. Every metric also carries the [standard attributes](04-attributes.md).
-> Prometheus name = OTEL name with `.` → `_` (with `add_metric_suffixes: false`, so
-> `claude_code.token.usage` → `claude_code_token_usage`). Source: <https://code.claude.com/docs/en/monitoring-usage> · snapshot 2026-07-10.
+> These are OTel **monotonic counters** (cumulative), so the Prometheus name is the OTEL name with
+> `.` → `_` **plus the unit and a `_total` suffix** (OTel→Prometheus compatibility spec): e.g.
+> `claude_code.token.usage` → `claude_code_token_usage_tokens_total`. See the Prometheus-name column
+> below. Source: <https://code.claude.com/docs/en/monitoring-usage> · snapshot 2026-07-10.
 
 ## Catalog
 
-| Metric                                | Unit   | Kind                        | Description                          |
-|---------------------------------------|--------|-----------------------------|--------------------------------------|
-| `claude_code.session.count`           | count  | gauge (inc at start)        | CLI sessions started.                |
-| `claude_code.lines_of_code.count`     | count  | gauge                       | Lines of code modified.              |
-| `claude_code.pull_request.count`      | count  | gauge                       | Pull requests created.               |
-| `claude_code.commit.count`            | count  | gauge                       | Git commits created.                 |
-| `claude_code.cost.usage`              | USD    | gauge (inc per API request) | Estimated session cost.              |
-| `claude_code.token.usage`             | tokens | gauge (inc per API request) | Tokens used.                         |
-| `claude_code.code_edit_tool.decision` | count  | gauge                       | Code-edit tool permission decisions. |
-| `claude_code.active_time.total`       | s      | gauge                       | Total active time.                   |
+| Metric                                | Unit   | Kind    | Prometheus name                          | Description                          |
+|---------------------------------------|--------|---------|------------------------------------------|--------------------------------------|
+| `claude_code.session.count`           | count  | counter | `claude_code_session_count_total`        | CLI sessions started.                |
+| `claude_code.lines_of_code.count`     | count  | counter | `claude_code_lines_of_code_count_total`  | Lines of code modified.              |
+| `claude_code.pull_request.count`      | count  | counter | `claude_code_pull_request_count_total`   | Pull requests created.               |
+| `claude_code.commit.count`            | count  | counter | `claude_code_commit_count_total`         | Git commits created.                 |
+| `claude_code.cost.usage`              | USD    | counter | `claude_code_cost_usage_USD_total`       | Estimated session cost.              |
+| `claude_code.token.usage`             | tokens | counter | `claude_code_token_usage_tokens_total`   | Tokens used.                         |
+| `claude_code.code_edit_tool.decision` | count  | counter | `claude_code_code_edit_tool_decision_total` | Code-edit tool permission decisions. |
+| `claude_code.active_time.total`       | s      | counter | `claude_code_active_time_seconds_total`  | Total active time.                   |
 
 ## Per-metric attributes (beyond standard)
 

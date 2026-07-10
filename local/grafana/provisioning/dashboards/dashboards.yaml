@@ -8,4 +8,13 @@ providers:
     updateIntervalSeconds: 15
     allowUiUpdates: true
     options:
-      path: /var/lib/grafana/dashboards
+      path: /var/lib/grafana/dashboards/claude-code
+  - name: operational
+    orgId: 1
+    folder: Operational
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 15
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/operational

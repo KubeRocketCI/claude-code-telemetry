@@ -32,14 +32,19 @@ ingress:
     annotations: {}
     tls: []
 
-# Ship config/grafana/dashboards/*.json as ConfigMaps picked up by the bundled
-# Grafana's dashboard sidecar (same label).
+# Ship config/grafana/dashboards/<scope>/*.json as ConfigMaps picked up by the bundled
+# Grafana's dashboard sidecar (same label). Each scope subdirectory maps to a Grafana
+# folder via the `folderAnnotation`; the sidecar's foldersFromFilesStructure creates them.
 dashboards:
   enabled: true
   label: grafana_dashboard
   labelValue: "1"
+  folderAnnotation: grafana_folder
   annotations: {}
-  # grafana_folder: Claude Code
+  # Scope subdirectory (under config/grafana/dashboards/) -> Grafana folder title.
+  folders:
+    claude-code: Claude Code
+    operational: Operational
 
 # Collector — upstream chart, plain Deployment.
 opentelemetry-collector:
@@ -70,6 +75,12 @@ opentelemetry-collector:
       containerPort: 8889
       servicePort: 8889
       protocol: TCP
+    # Collector self-telemetry (otelcol_* internal metrics) for the "Collector Health" dashboard.
+    metrics:
+      enabled: true
+      containerPort: 8888
+      servicePort: 8888
+      protocol: TCP
 
   # THE collector pipeline (used verbatim — no merging with upstream-chart defaults).
   # Receives OTLP from Claude Code, fans metrics to Prometheus and events/logs to Loki.
@@ -95,12 +106,14 @@ opentelemetry-collector:
 
     exporters:
       # Metrics -> Prometheus scrape endpoint on :8889.
-      # add_metric_suffixes:false keeps names predictable: claude_code.token.usage -> claude_code_token_usage
+      # Claude Code metrics are OTel counters, so Prometheus names carry the unit + `_total` suffix
+      # (claude_code.token.usage -> claude_code_token_usage_tokens_total,
+      #  claude_code.cost.usage -> claude_code_cost_usage_USD_total,
+      #  claude_code.session.count -> claude_code_session_count_total). Dashboards query these names.
       # resource_to_telemetry_conversion turns resource attrs (project, jira.ticket, user.email, ...)
       # into Prometheus labels so we can break tokens/cost down by them.
       prometheus:
         endpoint: 0.0.0.0:8889
-        add_metric_suffixes: false
         resource_to_telemetry_conversion:
           enabled: true
 
@@ -127,6 +140,16 @@ opentelemetry-collector:
       telemetry:
         logs:
           level: info
+        # Collector self-observability: expose internal otelcol_* metrics on :8888 for the
+        # "Collector Health" dashboard (Prometheus scrapes this as the `otel-collector` job).
+        metrics:
+          level: detailed
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
 
 # Event store (grafana/loki subchart) — SingleBinary, filesystem storage,
 # sized for the usage-audit event volume.
@@ -207,7 +230,8 @@ prometheus:
       size: 10Gi
   # Disable ALL of the chart's default scrape jobs (kubernetes-* cluster-wide
   # discovery, self-scrape, pushgateway) — this Prometheus monitors ONLY the
-  # bundle's collector via one static target.
+  # bundle's collector via two static targets: the Claude Code data metrics
+  # (:8889) and the collector's own health metrics (:8888).
   scrapeConfigs:
     prometheus:
       enabled: false
@@ -229,12 +253,21 @@ prometheus:
       enabled: false
     kubernetes-pods-slow:
       enabled: false
-    otel-collector:
+    # Claude Code metrics re-exported by the collector. honor_labels keeps the
+    # exporter's own job/instance labels (job="claude-code").
+    claude-code:
       enabled: true
       honor_labels: true
       static_configs:
         - targets:
             - otel-collector:8889
+    # Collector self-telemetry (otelcol_* internal metrics). Prometheus sets
+    # job="otel-collector"; the Collector Health dashboard queries up{job="otel-collector"}.
+    otel-collector:
+      enabled: true
+      static_configs:
+        - targets:
+            - otel-collector:8888
 
 # Visualization (grafana/grafana subchart).
 grafana:
@@ -250,6 +283,10 @@ grafana:
       enabled: true
       label: grafana_dashboard
       labelValue: "1"
+      # Place each dashboard into the folder named by its `grafana_folder` annotation.
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
   # Datasource UIDs match local/grafana provisioning so dashboards work unchanged.
   datasources:
     datasources.yaml:

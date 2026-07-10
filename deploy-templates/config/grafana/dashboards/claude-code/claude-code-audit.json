@@ -14,7 +14,7 @@
         "label": "Organization",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage, organization_id)",
+        "query": "label_values(claude_code_token_usage_tokens_total, organization_id)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -23,7 +23,7 @@
         "name": "project",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage{organization_id=~\"$organization_id\"}, project)",
+        "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\"}, project)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -32,7 +32,7 @@
         "name": "jira_epic",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\"}, jira_epic)",
+        "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\"}, jira_epic)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -41,7 +41,7 @@
         "name": "jira_story",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\"}, jira_story)",
+        "query": "label_values(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\"}, jira_story)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -50,7 +50,7 @@
         "name": "user_email",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage, user_email)",
+        "query": "label_values(claude_code_token_usage_tokens_total, user_email)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -59,7 +59,7 @@
         "name": "model",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(claude_code_token_usage, model)",
+        "query": "label_values(claude_code_token_usage_tokens_total, model)",
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -72,61 +72,61 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "fieldConfig": { "defaults": { "unit": "short" } },
-      "targets": [ { "expr": "sum(increase(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__range]))", "refId": "A" } ]
+      "targets": [ { "expr": "sum(increase(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__range]))", "refId": "A" } ]
     },
     {
       "type": "stat", "title": "Total cost USD (range)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
       "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 2 } },
-      "targets": [ { "expr": "sum(increase(claude_code_cost_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__range]))", "refId": "A" } ]
+      "targets": [ { "expr": "sum(increase(claude_code_cost_usage_USD_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__range]))", "refId": "A" } ]
     },
     {
       "type": "stat", "title": "Sessions (range)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
       "fieldConfig": { "defaults": { "unit": "short" } },
-      "targets": [ { "expr": "sum(increase(claude_code_session_count{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "refId": "A" } ]
+      "targets": [ { "expr": "sum(increase(claude_code_session_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "refId": "A" } ]
     },
     {
       "type": "stat", "title": "Commits (range)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
       "fieldConfig": { "defaults": { "unit": "short" } },
-      "targets": [ { "expr": "sum(increase(claude_code_commit_count{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "refId": "A" } ]
+      "targets": [ { "expr": "sum(increase(claude_code_commit_count_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "refId": "A" } ]
     },
     {
       "type": "timeseries", "title": "Tokens over time by type",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" } } } },
-      "targets": [ { "expr": "sum by (type) (rate(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__rate_interval]))", "legendFormat": "{{type}}", "refId": "A" } ]
+      "targets": [ { "expr": "sum by (type) (rate(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__rate_interval]))", "legendFormat": "{{type}}", "refId": "A" } ]
     },
     {
       "type": "piechart", "title": "Tokens by model",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 8, "w": 6, "x": 12, "y": 4 },
-      "targets": [ { "expr": "sum by (model) (increase(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "legendFormat": "{{model}}", "refId": "A" } ]
+      "targets": [ { "expr": "sum by (model) (increase(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "legendFormat": "{{model}}", "refId": "A" } ]
     },
     {
       "type": "piechart", "title": "Tokens: main vs subagent",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 8, "w": 6, "x": 18, "y": 4 },
-      "targets": [ { "expr": "sum by (query_source) (increase(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__range]))", "legendFormat": "{{query_source}}", "refId": "A" } ]
+      "targets": [ { "expr": "sum by (query_source) (increase(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", model=~\"$model\"}[$__range]))", "legendFormat": "{{query_source}}", "refId": "A" } ]
     },
     {
       "type": "barchart", "title": "Cost by project & epic (range)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
       "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
-      "targets": [ { "expr": "sum by (project, jira_epic) (increase(claude_code_cost_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "legendFormat": "{{project}} / {{jira_epic}}", "refId": "A" } ]
+      "targets": [ { "expr": "sum by (project, jira_epic) (increase(claude_code_cost_usage_USD_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\"}[$__range]))", "legendFormat": "{{project}} / {{jira_epic}}", "refId": "A" } ]
     },
     {
       "type": "barchart", "title": "Tokens by agent (subagents)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
       "fieldConfig": { "defaults": { "unit": "short" } },
-      "targets": [ { "expr": "sum by (agent_name) (increase(claude_code_token_usage{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", agent_name!=\"\"}[$__range]))", "legendFormat": "{{agent_name}}", "refId": "A" } ]
+      "targets": [ { "expr": "sum by (agent_name) (increase(claude_code_token_usage_tokens_total{organization_id=~\"$organization_id\", project=~\"$project\", jira_epic=~\"$jira_epic\", jira_story=~\"$jira_story\", user_email=~\"$user_email\", agent_name!=\"\"}[$__range]))", "legendFormat": "{{agent_name}}", "refId": "A" } ]
     },
     {
       "type": "table", "title": "Tool usage (count by tool) — from events",
