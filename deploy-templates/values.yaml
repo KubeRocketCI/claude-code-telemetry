@@ -95,6 +95,12 @@ opentelemetry-collector:
           http:
             endpoint: 0.0.0.0:4318
 
+    # The k8s Deployment's liveness/readiness probes target this endpoint (:13133);
+    # harmless locally, required in the Helm bundle.
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
     processors:
       batch:
         timeout: 5s
@@ -129,6 +135,7 @@ opentelemetry-collector:
         verbosity: ${env:DEBUG_VERBOSITY:-basic}
 
     service:
+      extensions: [health_check]
       pipelines:
         metrics:
           receivers: [otlp]
