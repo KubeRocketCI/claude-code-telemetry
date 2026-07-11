@@ -232,6 +232,11 @@ prometheus:
   prometheus-pushgateway:
     enabled: false
   server:
+    # The chart-level fullnameOverride is NOT used for the server resources —
+    # prometheus.server.fullname only honors server.fullnameOverride, else it
+    # prepends the release name. Pin it so the Grafana datasource URL
+    # (http://prometheus-server) resolves regardless of the release name.
+    fullnameOverride: prometheus-server
     retention: 30d
     persistentVolume:
       enabled: true

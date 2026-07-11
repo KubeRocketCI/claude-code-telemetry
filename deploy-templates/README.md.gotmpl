@@ -1,0 +1,80 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+## Overview
+
+A self-contained telemetry bundle for [Claude Code](https://code.claude.com) usage analytics:
+an OpenTelemetry Collector receives OTLP from Claude Code sessions and fans metrics out to a
+bundled Prometheus and events/logs to a bundled Loki, with Grafana dashboards provisioned on top.
+
+The bundle is deliberately isolated: Prometheus scrapes exactly two static targets (the collector's
+Claude Code data metrics and its self-telemetry), all cluster-wide discovery and cluster-monitoring
+extras are disabled, and RBAC is namespace-scoped. It brings no operator or CRD dependencies.
+
+## Prerequisites
+
+1. Linux machine or Windows Subsystem for Linux instance with [Helm 3](https://helm.sh/docs/intro/install/) installed;
+2. Access to a Kubernetes cluster with permissions to create a namespace.
+
+## Installation Using Helm Chart
+
+To install the bundle, follow the steps below:
+
+1. Pull the subchart dependencies:
+
+    ```bash
+    helm dependency update deploy-templates
+    ```
+
+2. Install the bundle into its own namespace:
+
+    ```bash
+    helm install claude-code-telemetry deploy-templates \
+      --namespace claude-code-telemetry --create-namespace
+    ```
+
+3. Check the `claude-code-telemetry` namespace: the `otel-collector`, `prometheus-server`,
+   `loki` and `grafana` workloads should reach the ready state.
+
+## Quick Start
+
+1. Expose the collector's OTLP endpoint to clients — either enable one of the ingresses
+   (`ingress.grpc` / `ingress.http`) or port-forward for a quick check:
+
+    ```bash
+    kubectl -n claude-code-telemetry port-forward svc/otel-collector 4318:4318
+    ```
+
+2. Point Claude Code at the collector by merging the telemetry `env` block into
+   `~/.claude/settings.json` (see `local/claude-settings.snippet.json` in the repository)
+   with `OTEL_EXPORTER_OTLP_ENDPOINT` set to the endpoint above, then restart Claude Code.
+
+3. Open Grafana and log in with the generated admin password:
+
+    ```bash
+    kubectl -n claude-code-telemetry port-forward svc/grafana 3000:80
+    kubectl -n claude-code-telemetry get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d
+    ```
+
+    Dashboards are auto-provisioned by the sidecar into the `Claude Code`, `Governance` and
+    `Operational` folders.
+
+## Local Development
+
+The collector pipeline and dashboards are iterated on in the repository's `local/` docker-compose
+stack first, then replicated into this chart (`values.yaml` → `opentelemetry-collector.alternateConfig`
+and `config/grafana/dashboards/`). See the repository root `README.md` for the full workflow.
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
