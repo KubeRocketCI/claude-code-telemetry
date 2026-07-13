@@ -9,3 +9,6 @@ deploy-templates/Chart.lock
 
 # Claude local
 .claude/settings.local.json
+
+# Tools
+bin/
