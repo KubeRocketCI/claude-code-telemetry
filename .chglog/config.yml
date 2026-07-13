@@ -1,0 +1,64 @@
+style: none
+template: CHANGELOG.tpl.md
+info:
+  title: CHANGELOG
+  repository_url: https://github.com/KubeRocketCI/claude-code-telemetry
+
+options:
+  tag_filter_pattern: '^v'
+  sort: "semVer"
+
+  commits:
+    filters:
+      Type:
+        - feat
+        - fix
+        - perf
+        - refactor
+        - style
+        - test
+        - docs
+        - ci
+        - build
+        - deps
+        - chore
+
+  commit_groups:
+    group_by: Type
+    sort_by: Custom
+    title_order:
+      - feat
+      - fix
+      - perf
+      - refactor
+      - style
+      - test
+      - docs
+      - ci
+      - build
+      - deps
+      - chore
+    title_maps:
+      feat: Features
+      fix: Bug Fixes
+      perf: Performance Improvements
+      refactor: Code Refactoring
+      style: Formatting
+      test: Testing
+      docs: Documentation
+      ci: CI
+      build: Build
+      deps: Dependencies
+      chore: Routine
+
+  header:
+    # Matches optional Jira prefix (e.g. "EPMDEDP-123: "), a conventional-commit
+    # type, an optional scope like "(deps)", and an optional "!" breaking marker.
+    pattern: "^(?:[A-Z]+-\\d+:\\s)?(\\w+)(?:\\(.+?\\))?!?:\\s(.*)$"
+    pattern_maps:
+      - Type
+      - Subject
+
+  notes:
+    keywords:
+      - "BREAKING CHANGE:"

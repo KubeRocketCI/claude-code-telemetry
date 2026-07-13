@@ -1,0 +1,9 @@
+validate-maintainers: false
+# Register the remote repositories for the chart's external subchart
+# dependencies so `ct lint` can build them on a clean CI node (where no
+# `helm repo add` has run yet). See deploy-templates/Chart.yaml dependencies.
+chart-repos:
+  - opentelemetry=https://open-telemetry.github.io/opentelemetry-helm-charts
+  - grafana=https://grafana.github.io/helm-charts
+  - prometheus-community=https://prometheus-community.github.io/helm-charts
+helm-dependency-extra-args: "--skip-refresh"

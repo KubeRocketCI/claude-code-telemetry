@@ -1,0 +1,48 @@
+name: Commit Message Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-commit-message:
+    name: Validate commit messages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check commit format
+        uses: gsactions/commit-message-checker@v2
+        with:
+          # Human commits MUST carry a Jira ID: "EPMDEDP-<ID>: <type>: <desc>".
+          # The only exception is Dependabot bumps, which cannot reference a
+          # ticket (e.g. "deps(deps): bump ..." or "ci: bump ...").
+          pattern: '^(EPMDEDP-\d+: (build|chore|ci|docs|feat|fix|perf|refactor|style|test)(!)?: .+|(build|chore|ci|deps)(\(deps\))?: [Bb]ump .+)$'
+          error: 'Commit title must be "EPMDEDP-<ID>: <type>: <description>" (Jira ID is mandatory). Example: "EPMDEDP-16058: feat: add feature".'
+          excludeDescription: 'true'
+          excludeTitle: 'true'
+          checkAllCommitMessages: 'true'
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check commit title length
+        uses: gsactions/commit-message-checker@v2
+        with:
+          pattern: '^.{10,120}$'
+          error: 'Commit title must be between 10 and 120 characters long.'
+          excludeDescription: 'true'
+          excludeTitle: 'true'
+          checkAllCommitMessages: 'true'
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
