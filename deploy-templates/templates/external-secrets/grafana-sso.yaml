@@ -8,7 +8,7 @@ Grafana consumes `username`/`password` (admin.existingSecret) and `clientSecret`
     --from-literal=clientSecret=<oauth-client-secret>
 */ -}}
 {{- if .Values.eso.enabled }}
-apiVersion: external-secrets.io/v1
+apiVersion: {{ .Values.eso.apiVersion }}
 kind: ExternalSecret
 metadata:
   name: grafana-sso

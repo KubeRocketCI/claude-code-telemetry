@@ -398,6 +398,10 @@ grafana:
 eso:
   # -- Render the SecretStore/ExternalSecret resources.
   enabled: false
+  # -- API version for the SecretStore/ExternalSecret resources. Match the CRD
+  # version served by the ESO controller in the target cluster (`external-secrets.io/v1`
+  # for ESO >= 0.10, or `external-secrets.io/v1beta1` for older installs).
+  apiVersion: "external-secrets.io/v1"
   # -- Defines provider type. One of `aws`, `generic`, or `vault`.
   provider: "generic"
   # -- Defines the path to the secret in the provider. If provider is `vault`, the path must be prefixed with `secret/`.

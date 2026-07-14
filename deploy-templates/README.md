@@ -102,6 +102,7 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 | dashboards.folders.operational | string | `"Operational"` |  |
 | dashboards.label | string | `"grafana_dashboard"` |  |
 | dashboards.labelValue | string | `"1"` |  |
+| eso.apiVersion | string | `"external-secrets.io/v1"` | API version for the SecretStore/ExternalSecret resources. Match the CRD version served by the ESO controller in the target cluster (`external-secrets.io/v1` for ESO >= 0.10, or `external-secrets.io/v1beta1` for older installs). |
 | eso.aws | object | `{"region":"eu-central-1","roleArn":"arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess"}` | AWS configuration (if provider is `aws`). |
 | eso.aws.region | string | `"eu-central-1"` | AWS region. |
 | eso.aws.roleArn | string | `"arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess"` | AWS role ARN for the ExternalSecretOperator to assume. |
