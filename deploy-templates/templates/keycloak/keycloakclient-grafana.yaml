@@ -1,0 +1,42 @@
+{{- if .Values.keycloakClient.create }}
+apiVersion: v1.edp.epam.com/v1
+kind: KeycloakClient
+metadata:
+  name: {{ .Values.keycloakClient.clientId }}
+  labels:
+    {{- include "claude-code-telemetry.labels" . | nindent 4 }}
+spec:
+  advancedProtocolMappers: true
+  clientId: {{ .Values.keycloakClient.clientId }}
+  directAccess: true
+  # Client secret consumed from the grafana-sso Secret (kubectl- or ESO-created; see values.yaml).
+  secret: $grafana-sso:clientSecret
+  defaultClientScopes:
+    - profile
+    - email
+    - roles
+  realmRef:
+    kind: {{ .Values.keycloakClient.realmRef.kind }}
+    name: {{ .Values.keycloakClient.realmRef.name }}
+  webUrl: {{ .Values.keycloakClient.grafanaUrl | quote }}
+  protocolMappers:
+    - name: roles
+      protocol: openid-connect
+      protocolMapper: "oidc-usermodel-realm-role-mapper"
+      config:
+        "access.token.claim": "true"
+        "claim.name": "roles"
+        "id.token.claim": "true"
+        "userinfo.token.claim": "true"
+        "multivalued": "true"
+    # Expose group membership so Grafana can gate access (allowed_groups) and map org roles.
+    - name: groups
+      protocol: openid-connect
+      protocolMapper: "oidc-group-membership-mapper"
+      config:
+        "access.token.claim": "true"
+        "claim.name": "groups"
+        "id.token.claim": "true"
+        "userinfo.token.claim": "true"
+        "full.path": "false"
+{{- end }}

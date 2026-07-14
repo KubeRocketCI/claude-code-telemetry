@@ -237,10 +237,10 @@ prometheus:
     # prepends the release name. Pin it so the Grafana datasource URL
     # (http://prometheus-server) resolves regardless of the release name.
     fullnameOverride: prometheus-server
-    retention: 30d
+    retention: 365d
     persistentVolume:
       enabled: true
-      size: 10Gi
+      size: 20Gi
   # Disable ALL of the chart's default scrape jobs (kubernetes-* cluster-wide
   # discovery, self-scrape, pushgateway) — this Prometheus monitors ONLY the
   # bundle's collector via two static targets: the Claude Code data metrics
@@ -291,6 +291,70 @@ grafana:
     namespaced: true
   testFramework:
     enabled: false
+
+  # --- Single sign-on (OIDC via Grafana generic OAuth — Keycloak or any OIDC provider) ---
+  # Everything SSO hangs off ONE Kubernetes Secret — `grafana-sso` — with three keys:
+  #   username / password  -> Grafana admin login (admin.existingSecret below)
+  #   clientSecret         -> OAuth client secret (envValueFrom below + KeycloakClient ref)
+  # Create it either way (this chart never renders Secrets itself):
+  #   kubectl: kubectl create secret generic grafana-sso \
+  #              --from-literal=username=<admin> --from-literal=password=<pass> \
+  #              --from-literal=clientSecret=<oauth-client-secret>
+  #   ESO:     eso.enabled=true — materialized from your secret manager (same three keys)
+  # To expose Grafana under SSO:
+  #   1. create the grafana-sso Secret (kubectl or ESO), uncomment envValueFrom and admin,
+  #   2. flip auth.generic_oauth.enabled=true and point the URLs at your provider,
+  #   3. enable the ingress and set server.root_url to the same host,
+  #   4. register the OIDC client at your provider — either by hand, or set
+  #      keycloakClient.create=true to render a KeycloakClient CR through the
+  #      keycloak-operator add-on (consuming $grafana-sso:clientSecret).
+
+  # envValueFrom:
+  #   GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+  #     secretKeyRef:
+  #       name: grafana-sso
+  #       key: clientSecret
+
+  grafana.ini:
+    analytics:
+      check_for_updates: false
+    server:
+      root_url: https://grafana.example.com
+    auth.generic_oauth:
+      enabled: false
+      name: SSO
+      auto_login: false
+      allow_sign_up: true
+      client_id: grafana-claude-code-telemetry
+      # Client secret comes from the GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET env var (envValueFrom above) — never inline it here.
+      scopes: openid profile email roles groups
+      email_attribute_path: email
+      # Keycloak endpoints (any OIDC provider exposes equivalents):
+      auth_url: https://keycloak.example.com/realms/main/protocol/openid-connect/auth
+      token_url: https://keycloak.example.com/realms/main/protocol/openid-connect/token
+      api_url: https://keycloak.example.com/realms/main/protocol/openid-connect/userinfo
+      # Map provider roles/groups to Grafana org roles (JMESPath over the userinfo/token claims).
+      role_attribute_path: contains(roles[*], 'administrator') && 'Admin' || contains(roles[*], 'developer') && 'Editor' || 'Viewer'
+      # Restrict sign-in to members of specific groups (requires the `groups` claim):
+      groups_attribute_path: groups
+      # allowed_groups: /grafana-users
+
+  # Grafana admin credentials from the same grafana-sso Secret.
+  # admin:
+  #   existingSecret: grafana-sso
+  #   userKey: username
+  #   passwordKey: password
+
+  ingress:
+    enabled: false
+    annotations: {}
+    hosts:
+      - grafana.example.com
+    path: /
+    pathType: Prefix
+    tls: []
+    # - secretName: grafana-tls
+    #   hosts: [grafana.example.com]
   sidecar:
     dashboards:
       enabled: true
@@ -316,3 +380,83 @@ grafana:
           uid: loki
           access: proxy
           url: http://loki:3100
+
+# This section enables configuration for using External Secrets Operator (ESO) as the
+# secret manager: it renders a SecretStore plus ONE ExternalSecret that materializes the
+# `grafana-sso` Secret (fixed name, fixed keys: username, password, clientSecret).
+# Store the secret in your provider at `secretPath` as a JSON object with exactly
+# those three properties:
+#   {"username": "<grafana-admin>", "password": "<grafana-admin-pass>", "clientSecret": "<oauth-client-secret>"}
+# Without ESO, create the identical Secret manually instead:
+#   kubectl -n <namespace> create secret generic grafana-sso \
+#     --from-literal=username=<grafana-admin> \
+#     --from-literal=password=<grafana-admin-pass> \
+#     --from-literal=clientSecret=<oauth-client-secret>
+# Prerequisite: ESO controller available — either pre-installed in the cluster or via
+# the optional `external-secrets` subchart at the bottom of this file.
+# https://docs.kuberocketci.io/docs/operator-guide/secrets-management/external-secrets-operator-integration
+eso:
+  # -- Render the SecretStore/ExternalSecret resources.
+  enabled: false
+  # -- Defines provider type. One of `aws`, `generic`, or `vault`.
+  provider: "generic"
+  # -- Defines the path to the secret in the provider. If provider is `vault`, the path must be prefixed with `secret/`.
+  secretPath: "/infra/claude-code-telemetry"
+  # -- Vault configuration (if provider is `vault`).
+  vault:
+    # -- Vault server URL.
+    server: "http://vault.vault:8200"
+    # -- Mount path for the Kubernetes authentication method.
+    mountPath: "core"
+    # -- Vault role for the Kubernetes authentication method.
+    role: claude-code-telemetry
+  # -- AWS configuration (if provider is `aws`).
+  aws:
+    # -- AWS region.
+    region: "eu-central-1"
+    # -- AWS role ARN for the ExternalSecretOperator to assume.
+    roleArn: "arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess"
+  generic:
+    secretStore:
+      # -- Defines SecretStore provider configuration.
+      providerConfig: {}
+      #  gcpsm:
+      #    projectID: "alphabet-123"
+
+# Grafana SSO Keycloak client. When enabled, the chart renders a KeycloakClient CR
+# (roles + groups protocol mappers) managed by the KubeRocketCI keycloak-operator — a
+# convenience for clusters that run it as an add-on. The chart does NOT install the
+# operator; prerequisite:
+#   https://github.com/epam/edp-cluster-add-ons/tree/main/clusters/core/addons/keycloak-operator
+# Leave `create: false` for a manual OIDC setup — register the client at your provider
+# (Keycloak or any other) yourself. Grafana SSO works either way: it depends only on the
+# `grafana-sso` Secret (key `clientSecret`, created with kubectl or ESO — see the `eso`
+# section above) and the grafana `generic_oauth` config, NOT on this block. The chart never
+# renders a Kubernetes Secret; the KeycloakClient CR reads `$grafana-sso:clientSecret` to
+# set the client secret in Keycloak.
+keycloakClient:
+  # -- Render a KeycloakClient CR for Grafana SSO via the KubeRocketCI keycloak-operator.
+  create: false
+  # -- OAuth client ID; keep in sync with grafana.grafana\.ini.auth\.generic_oauth.client_id.
+  clientId: grafana
+  # -- Grafana external URL (OAuth redirect base); keep in sync with grafana ingress host and server.root_url.
+  grafanaUrl: https://grafana.example.com
+  # -- Keycloak realm the client is created in.
+  realmRef:
+    kind: ClusterKeycloakRealm
+    name: main
+
+# Optional External Secrets Operator subchart (external-secrets/external-secrets).
+# Disabled by default — the bundle stays free of cluster-wide/CRD dependencies unless
+# you opt in. If ESO already runs in the cluster (e.g. via the edp-cluster-add-ons
+# external-secrets add-on), leave this off and only enable the `eso` block above.
+# NOTE: when enabling this subchart AND `eso` together for the first time, install in
+# two steps — first with only `external-secrets.enabled=true` (CRDs + validating webhook
+# must be up), then upgrade with `eso.enabled=true` — otherwise the ExternalSecret CRs
+# fail admission ("failed calling webhook ... connection refused").
+external-secrets:
+  enabled: false
+  installCRDs: true
+  # To keep the operator namespace-scoped (no cluster-wide RBAC)
+  scopedNamespace: claude-code-telemetry
+  scopedRBAC: true

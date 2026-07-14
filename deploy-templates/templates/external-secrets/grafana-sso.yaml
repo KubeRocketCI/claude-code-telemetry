@@ -1,0 +1,41 @@
+{{- /*
+The single SSO secret for this bundle: Grafana admin credentials + OAuth client secret.
+Grafana consumes `username`/`password` (admin.existingSecret) and `clientSecret`
+(envValueFrom -> GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET); the KeycloakClient CR references
+`$grafana-sso:clientSecret`. Without ESO, create the same Secret manually:
+  kubectl create secret generic grafana-sso \
+    --from-literal=username=<admin> --from-literal=password=<pass> \
+    --from-literal=clientSecret=<oauth-client-secret>
+*/ -}}
+{{- if .Values.eso.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-sso
+  labels:
+    {{- include "claude-code-telemetry.labels" . | nindent 4 }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: {{ .Release.Name }}
+  data:
+    - secretKey: username
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: {{ .Values.eso.secretPath }}
+        property: username
+    - secretKey: password
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: {{ .Values.eso.secretPath }}
+        property: password
+    - secretKey: clientSecret
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: {{ .Values.eso.secretPath }}
+        property: clientSecret
+{{- end }}

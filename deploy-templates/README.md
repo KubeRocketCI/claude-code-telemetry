@@ -84,6 +84,7 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 
 | Repository | Name | Version |
 |------------|------|---------|
+| https://charts.external-secrets.io/ | external-secrets | 2.7.0 |
 | https://grafana.github.io/helm-charts | grafana | 10.5.15 |
 | https://grafana.github.io/helm-charts | loki | 7.0.0 |
 | https://open-telemetry.github.io/opentelemetry-helm-charts | opentelemetry-collector | 0.164.1 |
@@ -101,7 +102,36 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 | dashboards.folders.operational | string | `"Operational"` |  |
 | dashboards.label | string | `"grafana_dashboard"` |  |
 | dashboards.labelValue | string | `"1"` |  |
+| eso.aws | object | `{"region":"eu-central-1","roleArn":"arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess"}` | AWS configuration (if provider is `aws`). |
+| eso.aws.region | string | `"eu-central-1"` | AWS region. |
+| eso.aws.roleArn | string | `"arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess"` | AWS role ARN for the ExternalSecretOperator to assume. |
+| eso.enabled | bool | `false` | Render the SecretStore/ExternalSecret resources. |
+| eso.generic.secretStore.providerConfig | object | `{}` | Defines SecretStore provider configuration. |
+| eso.provider | string | `"generic"` | Defines provider type. One of `aws`, `generic`, or `vault`. |
+| eso.secretPath | string | `"/infra/claude-code-telemetry"` | Defines the path to the secret in the provider. If provider is `vault`, the path must be prefixed with `secret/`. |
+| eso.vault | object | `{"mountPath":"core","role":"claude-code-telemetry","server":"http://vault.vault:8200"}` | Vault configuration (if provider is `vault`). |
+| eso.vault.mountPath | string | `"core"` | Mount path for the Kubernetes authentication method. |
+| eso.vault.role | string | `"claude-code-telemetry"` | Vault role for the Kubernetes authentication method. |
+| eso.vault.server | string | `"http://vault.vault:8200"` | Vault server URL. |
+| external-secrets.enabled | bool | `false` |  |
+| external-secrets.installCRDs | bool | `true` |  |
+| external-secrets.scopedNamespace | string | `"claude-code-telemetry"` |  |
+| external-secrets.scopedRBAC | bool | `true` |  |
 | fullnameOverride | string | `"claude-code-telemetry"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".allow_sign_up | bool | `true` |  |
+| grafana."grafana.ini"."auth.generic_oauth".api_url | string | `"https://keycloak.example.com/realms/main/protocol/openid-connect/userinfo"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".auth_url | string | `"https://keycloak.example.com/realms/main/protocol/openid-connect/auth"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".auto_login | bool | `false` |  |
+| grafana."grafana.ini"."auth.generic_oauth".client_id | string | `"grafana-claude-code-telemetry"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".email_attribute_path | string | `"email"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".enabled | bool | `false` |  |
+| grafana."grafana.ini"."auth.generic_oauth".groups_attribute_path | string | `"groups"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".name | string | `"SSO"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".role_attribute_path | string | `"contains(roles[*], 'administrator') && 'Admin' || contains(roles[*], 'developer') && 'Editor' || 'Viewer'"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".scopes | string | `"openid profile email roles groups"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".token_url | string | `"https://keycloak.example.com/realms/main/protocol/openid-connect/token"` |  |
+| grafana."grafana.ini".analytics.check_for_updates | bool | `false` |  |
+| grafana."grafana.ini".server.root_url | string | `"https://grafana.example.com"` |  |
 | grafana.datasources."datasources.yaml".apiVersion | int | `1` |  |
 | grafana.datasources."datasources.yaml".datasources[0].access | string | `"proxy"` |  |
 | grafana.datasources."datasources.yaml".datasources[0].isDefault | bool | `true` |  |
@@ -116,6 +146,12 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 | grafana.datasources."datasources.yaml".datasources[1].url | string | `"http://loki:3100"` |  |
 | grafana.enabled | bool | `true` |  |
 | grafana.fullnameOverride | string | `"grafana"` |  |
+| grafana.ingress.annotations | object | `{}` |  |
+| grafana.ingress.enabled | bool | `false` |  |
+| grafana.ingress.hosts[0] | string | `"grafana.example.com"` |  |
+| grafana.ingress.path | string | `"/"` |  |
+| grafana.ingress.pathType | string | `"Prefix"` |  |
+| grafana.ingress.tls | list | `[]` |  |
 | grafana.rbac.namespaced | bool | `true` |  |
 | grafana.sidecar.dashboards.enabled | bool | `true` |  |
 | grafana.sidecar.dashboards.folderAnnotation | string | `"grafana_folder"` |  |
@@ -131,6 +167,10 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 | ingress.http.enabled | bool | `false` |  |
 | ingress.http.host | string | `"otel-http.example.com"` |  |
 | ingress.http.tls | list | `[]` |  |
+| keycloakClient.clientId | string | `"grafana"` | OAuth client ID; keep in sync with grafana.grafana\.ini.auth\.generic_oauth.client_id. |
+| keycloakClient.create | bool | `false` | Render a KeycloakClient CR for Grafana SSO via the KubeRocketCI keycloak-operator. |
+| keycloakClient.grafanaUrl | string | `"https://grafana.example.com"` | Grafana external URL (OAuth redirect base); keep in sync with grafana ingress host and server.root_url. |
+| keycloakClient.realmRef | object | `{"kind":"ClusterKeycloakRealm","name":"main"}` | Keycloak realm the client is created in. |
 | loki.backend.replicas | int | `0` |  |
 | loki.chunksCache.enabled | bool | `false` |  |
 | loki.deploymentMode | string | `"SingleBinary"` |  |
@@ -231,5 +271,5 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 | prometheus.scrapeConfigs.prometheus.enabled | bool | `false` |  |
 | prometheus.server.fullnameOverride | string | `"prometheus-server"` |  |
 | prometheus.server.persistentVolume.enabled | bool | `true` |  |
-| prometheus.server.persistentVolume.size | string | `"10Gi"` |  |
-| prometheus.server.retention | string | `"30d"` |  |
+| prometheus.server.persistentVolume.size | string | `"20Gi"` |  |
+| prometheus.server.retention | string | `"365d"` |  |
