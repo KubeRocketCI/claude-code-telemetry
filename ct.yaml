@@ -6,4 +6,5 @@ chart-repos:
   - opentelemetry=https://open-telemetry.github.io/opentelemetry-helm-charts
   - grafana=https://grafana.github.io/helm-charts
   - prometheus-community=https://prometheus-community.github.io/helm-charts
+  - external-secrets=https://charts.external-secrets.io/
 helm-dependency-extra-args: "--skip-refresh"
