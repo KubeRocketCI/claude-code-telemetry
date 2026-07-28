@@ -126,10 +126,9 @@ and `config/grafana/dashboards/`). See the repository root `README.md` for the f
 | grafana."grafana.ini"."auth.generic_oauth".client_id | string | `"grafana-claude-code-telemetry"` |  |
 | grafana."grafana.ini"."auth.generic_oauth".email_attribute_path | string | `"email"` |  |
 | grafana."grafana.ini"."auth.generic_oauth".enabled | bool | `false` |  |
-| grafana."grafana.ini"."auth.generic_oauth".groups_attribute_path | string | `"groups"` |  |
 | grafana."grafana.ini"."auth.generic_oauth".name | string | `"SSO"` |  |
 | grafana."grafana.ini"."auth.generic_oauth".role_attribute_path | string | `"contains(roles[*], 'administrator') && 'Admin' || contains(roles[*], 'developer') && 'Editor' || 'Viewer'"` |  |
-| grafana."grafana.ini"."auth.generic_oauth".scopes | string | `"openid profile email roles groups"` |  |
+| grafana."grafana.ini"."auth.generic_oauth".scopes | string | `"openid profile email roles"` |  |
 | grafana."grafana.ini"."auth.generic_oauth".token_url | string | `"https://keycloak.example.com/realms/main/protocol/openid-connect/token"` |  |
 | grafana."grafana.ini".analytics.check_for_updates | bool | `false` |  |
 | grafana."grafana.ini".server.root_url | string | `"https://grafana.example.com"` |  |

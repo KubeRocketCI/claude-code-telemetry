@@ -327,7 +327,7 @@ grafana:
       allow_sign_up: true
       client_id: grafana-claude-code-telemetry
       # Client secret comes from the GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET env var (envValueFrom above) — never inline it here.
-      scopes: openid profile email roles groups
+      scopes: openid profile email roles
       email_attribute_path: email
       # Keycloak endpoints (any OIDC provider exposes equivalents):
       auth_url: https://keycloak.example.com/realms/main/protocol/openid-connect/auth
@@ -335,9 +335,6 @@ grafana:
       api_url: https://keycloak.example.com/realms/main/protocol/openid-connect/userinfo
       # Map provider roles/groups to Grafana org roles (JMESPath over the userinfo/token claims).
       role_attribute_path: contains(roles[*], 'administrator') && 'Admin' || contains(roles[*], 'developer') && 'Editor' || 'Viewer'
-      # Restrict sign-in to members of specific groups (requires the `groups` claim):
-      groups_attribute_path: groups
-      # allowed_groups: /grafana-users
 
   # Grafana admin credentials from the same grafana-sso Secret.
   # admin:

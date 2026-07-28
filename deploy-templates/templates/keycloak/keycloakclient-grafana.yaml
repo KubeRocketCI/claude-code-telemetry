@@ -29,14 +29,4 @@ spec:
         "id.token.claim": "true"
         "userinfo.token.claim": "true"
         "multivalued": "true"
-    # Expose group membership so Grafana can gate access (allowed_groups) and map org roles.
-    - name: groups
-      protocol: openid-connect
-      protocolMapper: "oidc-group-membership-mapper"
-      config:
-        "access.token.claim": "true"
-        "claim.name": "groups"
-        "id.token.claim": "true"
-        "userinfo.token.claim": "true"
-        "full.path": "false"
 {{- end }}
